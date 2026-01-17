@@ -10,5 +10,5 @@ Not finished
 pwuser.exe still lack feature : user password change to reflect on site password list
 pwedit.exe : edit site password list
 
-
+Acknowledgement :
 *) sqlite3.dll is SQLite 3 library for Windows, supplied by https://sqlite.org

@@ -1,4 +1,5 @@
-The app is written using CodeTypho 8.8.
+The app is made with CodeTyphon 8.80
+
 Start with login.exe, add new user by pressing Ctrl-A.
 
 Finished:

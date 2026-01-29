@@ -18,12 +18,13 @@ type
   TfrmUser = class(TForm)
     btnSave: TButton;
     cphUser: TDCP_blowfish;
-    edtUserName: TEdit;
-    edtUserPass: TEdit;
+    edtOwnerName: TEdit;
+    edtNewPass: TEdit;
     dbUser: TSQLite3Connection;
     lblOldPass: TLabel;
+    qrySite: TSQLQuery;
     qryUser: TSQLQuery;
-    edtPassConf: TEdit;
+    edtConfPass: TEdit;
     lblUserName: TLabel;
     lblUserPass: TLabel;
     lblPassConf: TLabel;
@@ -36,27 +37,26 @@ type
       );
     procedure edtOldPassKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure edtPassConfKeyDown(Sender: TObject; var Key: Word;
+    procedure edtConfPassKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure edtUserNameEnter(Sender: TObject);
-    procedure edtUserNameExit(Sender: TObject);
+    procedure edtOwnerNameEnter(Sender: TObject);
+    procedure edtOwnerNameExit(Sender: TObject);
     procedure edtOldPassEnter(Sender: TObject);
-    procedure edtPassConfEnter(Sender: TObject);
-    procedure edtUserNameKeyDown(Sender: TObject; var Key: Word;
+    procedure edtConfPassEnter(Sender: TObject);
+    procedure edtOwnerNameKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure edtUserPassEnter(Sender: TObject);
-    procedure edtUserPassKeyDown(Sender: TObject; var Key: Word;
+    procedure edtNewPassEnter(Sender: TObject);
+    procedure edtNewPassKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
   private
-    aConfig     : TIniFile;
-    aOldPass    : String;
-    aUserExists : Boolean;
+    aConfig       : TIniFile;
+    aOwnerOldPass : String;
+    bOwnerExists   : Boolean;
     procedure GetThatDamnConfig;
     procedure SetThatDamnConfig;
-    procedure FillQuery(aQuery : TSQLQuery; aSentence : String);
     function UserExists(aUserName : String) : Boolean;
     procedure DoSave;
   public
@@ -77,24 +77,25 @@ begin
 SetThatDamnConfig;
 aConfig.Free;
 qryUser.Close;
+qrySite.Close;
 trxUser.Active := false;
 dbUser.Connected := false;
 end;
 
-procedure TfrmUser.edtUserNameExit(Sender: TObject);
+procedure TfrmUser.edtOwnerNameExit(Sender: TObject);
 begin
-aUserExists := UserExists(edtUserName.Text);
-if (aUserExists) then
+bOwnerExists := UserExists(edtOwnerName.Text);
+if (bOwnerExists) then
    begin
-   aOldPass := qryUser.FieldByName('newpass').AsString;
+   aOwnerOldPass := qryUser.FieldByName('newpass').AsString;
    edtOldPass.Enabled := true;
    ActiveControl := edtOldPass;
    end
 else
    begin
-   aOldPass := '';
+   aOwnerOldPass := '';
    edtOldPass.Enabled := false;
-   ActiveControl := edtUserPass;
+   ActiveControl := edtNewPass;
    end;
 end;
 
@@ -103,12 +104,12 @@ begin
 stbUser.SimpleText := 'Enter current password to change; Alt-S to save';
 end;
 
-procedure TfrmUser.edtPassConfEnter(Sender: TObject);
+procedure TfrmUser.edtConfPassEnter(Sender: TObject);
 begin
 stbUser.SimpleText := 'Password confirmation; Alt-S to save';
 end;
 
-procedure TfrmUser.edtUserNameKeyDown(Sender: TObject; var Key: Word;
+procedure TfrmUser.edtOwnerNameKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   case Key of
@@ -122,7 +123,7 @@ begin
                       end
                    else
                       begin
-                      ActiveControl := edtUserPass;
+                      ActiveControl := edtNewPass;
                       end;
                    end;
        vk_Return : begin
@@ -132,18 +133,18 @@ begin
                       end
                    else
                       begin
-                      ActiveControl := edtUserPass;
+                      ActiveControl := edtNewPass;
                       end;
                    end;
        end;
 end;
 
-procedure TfrmUser.edtUserPassEnter(Sender: TObject);
+procedure TfrmUser.edtNewPassEnter(Sender: TObject);
 begin
 stbUser.SimpleText := 'Enter password; Alt-S to save';
 end;
 
-procedure TfrmUser.edtUserPassKeyDown(Sender: TObject; var Key: Word;
+procedure TfrmUser.edtNewPassKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
 case Key of
@@ -154,19 +155,19 @@ case Key of
                     end
                  else
                     begin
-                    ActiveControl := edtUserName;
+                    ActiveControl := edtOwnerName;
                     end;
                  end;
      vk_Down   : begin
-                 ActiveControl := edtPassConf;
+                 ActiveControl := edtConfPass;
                  end;
      vk_Return : begin
-                 ActiveControl := edtPassConf;
+                 ActiveControl := edtConfPass;
                  end;
      end;
 end;
 
-procedure TfrmUser.edtUserNameEnter(Sender: TObject);
+procedure TfrmUser.edtOwnerNameEnter(Sender: TObject);
 begin
 stbUser.SimpleText := 'Enter user name; Alt-S to save';
 end;
@@ -181,10 +182,10 @@ procedure TfrmUser.btnSaveKeyDown(Sender: TObject; var Key: Word;
 begin
 case Key of
      vk_Up     : begin
-                 ActiveControl := edtPassConf;
+                 ActiveControl := edtConfPass;
                  end;
      vk_Down   : begin
-                 ActiveControl := edtUserName;
+                 ActiveControl := edtOwnerName;
                  end;
      end;
 
@@ -195,24 +196,24 @@ procedure TfrmUser.edtOldPassKeyDown(Sender: TObject; var Key: Word;
 begin
 case Key of
      vk_Up     : begin
-                 ActiveControl := edtUserName;
+                 ActiveControl := edtOwnerName;
                  end;
      vk_Down   : begin
-                 ActiveControl := edtUserPass;
+                 ActiveControl := edtNewPass;
                  end;
      vk_Return : begin
-                 ActiveControl := edtUserPass;
+                 ActiveControl := edtNewPass;
                  end;
      end;
 
 end;
 
-procedure TfrmUser.edtPassConfKeyDown(Sender: TObject; var Key: Word;
+procedure TfrmUser.edtConfPassKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
 case Key of
      vk_Up     : begin
-                 ActiveControl := edtUserPass;
+                 ActiveControl := edtNewPass;
                  end;
      vk_Down   : begin
                  ActiveControl := btnSave;
@@ -234,8 +235,8 @@ begin
 aConfig := TIniFile.Create('.\config.ini');
 GetThatDamnConfig;
 dbUser.Connected := true;
-//edtUserName.Text := Trim(ParamStr(1));
-//edtUserPass.Text := Trim(ParamStr(2));
+//edtOwnerName.Text := Trim(ParamStr(1));
+//edtNewPass.Text := Trim(ParamStr(2));
 edtOldPass.Enabled := false;
 dbUser.Connected := true;
 trxUser.Active := true;
@@ -269,18 +270,11 @@ aConfig.WriteInteger('user_position', 'left', frmUser.Left);
 aConfig.WriteInteger('user_position', 'top', frmUser.Top);
 end;
 
-procedure TfrmUser.FillQuery(aQuery: TSQLQuery; aSentence: String);
-begin
-aQuery.Close;
-aQuery.SQL.Clear;
-aQuery.SQL.Add(aSentence);
-end;
-
 function TfrmUser.UserExists(aUserName: String): Boolean;
 begin
-// qry0001 = 'select * from owner where name = :aUserName';
+// qry0001 = 'select * from owner where name = :aownername';
 FillQuery(qryUser, qry0001);
-qryUser.ParamByName('ausername').AsString := Trim(edtUserName.Text);
+qryUser.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
 qryUser.Open;
 if (qryUser.EOF) then
    begin
@@ -293,22 +287,27 @@ else
 end;
 
 procedure TfrmUser.DoSave;
-var aNewPass  : String;
-    xOldPass  : String;
+var aOwnerNewPass : String;
+    xOwnerOldPass : String;
+    aSiteName     : String;
+    aUserName     : String;
+    aUserOldPass  : String;
+    aUserNewPass  : String;
 begin
-if (Trim(edtUserPass.Text) <> Trim(edtPassConf.Text)) then
+if (Trim(edtNewPass.Text) <> Trim(edtConfPass.Text)) then
    begin
    ShowMessage('Password and confirmation does not match.');
-   ActiveControl := edtUserPass;
+   ActiveControl := edtNewPass;
    Exit;
    end;
 
-xOldPass := UserPassMaker(Trim(edtOldPass.Text));
-aNewPass := UserPassMaker(Trim(edtUserPass.Text));
+xOwnerOldPass := OwnerPassMaker(Trim(edtOldPass.Text));
+aOwnerNewPass := OwnerPassMaker(Trim(edtNewPass.Text));
 
-if (aUserExists) then
+if (bOwnerExists) then
    begin
-   if (aOldPass <> xOldPass) then
+   // if old owner exist
+   if (aOwnerOldPass <> xOwnerOldPass) then
       begin
       ShowMessage('Old password does not match.');
       ActiveControl := edtOldPass;
@@ -316,33 +315,53 @@ if (aUserExists) then
       end
    else
       begin
-//      qry0011 = 'update owner set oldpass = :aoldpass where name = :ausername';
-//      qry0012 = 'update owner set newpass = :anewpass where name = :ausername';
+//      qry0011 = 'update owner set oldpass = :aoldpass where name = :aownername';
       FillQuery(qryUser, qry0011);
-      qryUser.ParamByName('aoldpass').AsString := xOldPass;
-      qryUser.ParamByName('ausername').AsString := Trim(edtUserName.Text);
+      qryUser.ParamByName('aoldpass').AsString := xOwnerOldPass;
+      qryUser.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
       qryUser.ExecSQL;
+//      qry0012 = 'update owner set newpass = :anewpass where name = :aownername';
       FillQuery(qryUser, qry0012);
-      qryUser.ParamByName('ausername').AsString := Trim(edtUserName.Text);
-      qryUser.ParamByName('anewpass').AsString := aNewPass;
+      qryUser.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
+      qryUser.ParamByName('anewpass').AsString := aOwnerNewPass;
       qryUser.ExecSQL;
 
-// change the site password list here
+// change to owner pass reflected to the site password list
+// qry0002 = 'select * from password where owner = :aownername';
+      FillQuery(qryUser, qry0002);
+      qryUser.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
+      qryUser.Open;
+      qryUser.First;
+      while not(qryUser.EOF) do
+            begin
+            aUserName := qryUser.FieldByName('username').AsString;
+            aSiteName := qryUser.FieldByName('site').AsString;
+            aUserOldPass := SitePassReader(Trim(edtOldPass.Text), qryUser.FieldByName('userpass').AsString, aUserName);
+            aUserNewPass := SitePassMaker(Trim(edtNewPass.Text), aUserOldPass, aUserName);
+//            qry0031 = 'update password set userpass = :auserpass where username = :ausername and asite = :asite and owner = :aownername';
+            FillQuery(qrySite, qry0031);
+            qrySite.ParamByName('auserpass').AsString := aUserNewPass;
+            qrySite.ParamByName('ausername').AsString := aUserName;
+            qrySite.ParamByName('asite').AsString := aSiteName;
+            qrySite.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
+            qrySite.ExecSQL;
 
+            qryUser.Next;
+            end;
       trxUser.Commit;
       end;
    end
 else
    begin
-//   qry0021 = 'insert into owner (name, oldpass, newpass) values (:ausername, :aoldpass, :anewpass)';
+//   qry0021 = 'insert into owner (name, oldpass, newpass) values (:aownername, :aoldpass, :anewpass)';
    FillQuery(qryUser, qry0021);
-   qryUser.ParamByName('ausername').AsString := Trim(edtUserName.Text);
-   qryUser.ParamByName('aoldpass').AsString := aNewPass;
-   qryUser.ParamByName('anewpass').AsString := aNewPass;
+   qryUser.ParamByName('aownername').AsString := Trim(edtOwnerName.Text);
+   qryUser.ParamByName('aoldpass').AsString := aOwnerNewPass;
+   qryUser.ParamByName('anewpass').AsString := aOwnerNewPass;
    qryUser.ExecSQL;
    trxUser.Commit;
    end;
-ActiveControl := edtUserName;
+ActiveControl := edtOwnerName;
 end;
 
 end.

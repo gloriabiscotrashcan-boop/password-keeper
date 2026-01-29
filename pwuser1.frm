@@ -39,17 +39,17 @@ object frmUser: TfrmUser
     AutoSize = False
     Caption = 'Confirmation :'
   end
-  object edtUserName: TEdit
+  object edtOwnerName: TEdit
     Left = 96
     Height = 23
     Top = 4
     Width = 120
     TabOrder = 0
-    OnEnter = edtUserNameEnter
-    OnExit = edtUserNameExit
-    OnKeyDown = edtUserNameKeyDown
+    OnEnter = edtOwnerNameEnter
+    OnExit = edtOwnerNameExit
+    OnKeyDown = edtOwnerNameKeyDown
   end
-  object edtUserPass: TEdit
+  object edtNewPass: TEdit
     Left = 96
     Height = 23
     Top = 64
@@ -57,10 +57,10 @@ object frmUser: TfrmUser
     EchoMode = emPassword
     PasswordChar = '*'
     TabOrder = 2
-    OnEnter = edtUserPassEnter
-    OnKeyDown = edtUserPassKeyDown
+    OnEnter = edtNewPassEnter
+    OnKeyDown = edtNewPassKeyDown
   end
-  object edtPassConf: TEdit
+  object edtConfPass: TEdit
     Left = 96
     Height = 23
     Top = 92
@@ -68,8 +68,8 @@ object frmUser: TfrmUser
     EchoMode = emPassword
     PasswordChar = '*'
     TabOrder = 3
-    OnEnter = edtPassConfEnter
-    OnKeyDown = edtPassConfKeyDown
+    OnEnter = edtConfPassEnter
+    OnKeyDown = edtConfPassKeyDown
   end
   object lblOldPass: TLabel
     Left = 8
@@ -141,5 +141,12 @@ object frmUser: TfrmUser
     BlockSize = 64
     Left = 252
     Top = 19
+  end
+  object qrySite: TSQLQuery
+    FieldDefs = <>
+    Database = dbUser
+    Transaction = trxUser
+    Left = 432
+    Top = 15
   end
 end
